@@ -1,45 +1,61 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
+import React, {useEffect} from 'react';
+import {StatusBar} from 'react-native';
+import {SafeAreaProvider} from 'react-native-safe-area-context';
+import messaging from '@react-native-firebase/messaging';
+import notifee, {AndroidImportance} from '@notifee/react-native';
+import AppNavigator from './src/navigation/AppNavigator';
+import {COLORS} from './src/utils/theme';
 
-import { NewAppScreen } from '@react-native/new-app-screen';
-import { StatusBar, StyleSheet, useColorScheme, View } from 'react-native';
-import {
-  SafeAreaProvider,
-  useSafeAreaInsets,
-} from 'react-native-safe-area-context';
+function App(): React.JSX.Element {
+  useEffect(() => {
+    const setupNotifications = async () => {
+      try {
+        const authStatus = await messaging().requestPermission();
+        const enabled =
+          authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
+          authStatus === messaging.AuthorizationStatus.PROVISIONAL;
 
-function App() {
-  const isDarkMode = useColorScheme() === 'dark';
+        if (enabled) {
+          console.log('Notification permission granted');
+          const channelId = await notifee.createChannel({
+            id: 'hydration-reminders',
+            name: 'Hydration Reminders',
+            importance: AndroidImportance.HIGH,
+          });
+
+          const unsubscribe = messaging().onMessage(async remoteMessage => {
+            console.log('Foreground Message:', remoteMessage);
+            await notifee.displayNotification({
+              title: remoteMessage.notification?.title || 'Hydration Reminder',
+              body: remoteMessage.notification?.body || 'Time to drink water!',
+              android: {
+                channelId,
+                importance: AndroidImportance.HIGH,
+                pressAction: { id: 'default' },
+              },
+            });
+          });
+          return unsubscribe;
+        }
+      } catch (error) {
+        console.error('Failed to setup notifications:', error);
+      }
+    };
+
+    const unsubscribePromise = setupNotifications();
+    return () => {
+      unsubscribePromise.then(unsubscribe => {
+        if (unsubscribe) { unsubscribe(); }
+      });
+    };
+  }, []);
 
   return (
     <SafeAreaProvider>
-      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      <AppContent />
+      <StatusBar barStyle="light-content" backgroundColor={COLORS.background} />
+      <AppNavigator />
     </SafeAreaProvider>
   );
 }
-
-function AppContent() {
-  const safeAreaInsets = useSafeAreaInsets();
-
-  return (
-    <View style={styles.container}>
-      <NewAppScreen
-        templateFileName="App.tsx"
-        safeAreaInsets={safeAreaInsets}
-      />
-    </View>
-  );
-}
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-});
 
 export default App;

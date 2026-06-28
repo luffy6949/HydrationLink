@@ -106,7 +106,17 @@ android {
         }
     }
 }
+// Forcefully override react-native-screens dual compilation target bug
+project.ext.react = [
+    autolink: true
+]
 
+configurations.all {
+    resolutionStrategy {
+        // Ensure no conflicting native code configurations are duplicate-linked
+        force 'com.facebook.react:react-android:0.86.0'
+    }
+}
 dependencies {
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
@@ -117,3 +127,4 @@ dependencies {
         implementation jscFlavor
     }
 }
+apply plugin: 'com.google.gms.google-services'
