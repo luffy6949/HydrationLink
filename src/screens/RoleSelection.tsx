@@ -1,4 +1,4 @@
-﻿import React, {useState} from 'react';
+import React, {useState} from 'react';
 import {
   View,
   Text,
@@ -30,7 +30,7 @@ const RoleSelection: React.FC<Props> = ({navigation}) => {
     setLoading(role);
     try {
       const deviceToken = await storage.getDeviceToken();
-      const response = await claimRole(role, deviceToken || 'unknown');
+      const response = await claimRole(role === 'sender' ? 'SENDER' : 'RECEIVER', deviceToken || 'unknown');
 
       await storage.saveToken(response.deviceToken);
       await storage.saveRole(role);

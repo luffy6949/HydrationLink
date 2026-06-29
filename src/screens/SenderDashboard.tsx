@@ -9,10 +9,10 @@ import {
 } from 'react-native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {RootStackParamList} from '../navigation/AppNavigator';
-import {sendReminder} from '../services/api';
+import {sendReminder, syncDeviceState} from '../services/api';
 import {storage} from '../utils/storage';
 import {COLORS, SPACING, TYPOGRAPHY} from '../utils/theme';
-import {getSocket} from '../services/socket';
+import {getSocket, connectSocket} from '../services/socket';
 
 type SenderDashboardNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -33,24 +33,54 @@ const SenderDashboard: React.FC<Props> = ({navigation}) => {
   const [remainingMs, setRemainingMs] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Existing socket listener — UNTOUCHED
+  // Unified auth verification, FCM registration, socket connection, and listener setup on mount
   useEffect(() => {
-    const socket = getSocket();
-    
-    if (socket) {
-      const handleAcknowledged = (data: {at?: string, timestamp?: string}) => {
-        setLastAcknowledged(data.at || data.timestamp || new Date().toISOString());
-        setRemindersSent(prev => prev + 1);
-        Alert.alert('Hydration Success!', 'Receiver has drank water!');
-      };
+    let socketInstance: any = null;
 
-      socket.on('ackUpdated', handleAcknowledged);
+    const initAuthAndSocket = async () => {
+      try {
+        // 1. Force explicit API call to refresh FCM and check auth
+        await syncDeviceState();
 
-      return () => {
-        socket.off('ackUpdated', handleAcknowledged);
-      };
-    }
-  }, []);
+        // 2. Establish/retrieve the socket connection
+        const socket = await connectSocket();
+
+        if (socket) {
+          socketInstance = socket;
+          const handleAcknowledged = (data: {at?: string, timestamp?: string}) => {
+            setLastAcknowledged(data.at || data.timestamp || new Date().toISOString());
+            setRemindersSent(prev => prev + 1);
+            Alert.alert('Hydration Success!', 'Receiver has drank water!');
+          };
+
+          socket.on('ackUpdated', handleAcknowledged);
+        }
+      } catch (error: any) {
+        console.error('Auth verification failed on SenderDashboard mount:', error);
+        const errText = error.response?.data?.error || error.response?.data?.message || '';
+        if (
+          error.response?.status === 401 ||
+          error.response?.status === 404 ||
+          errText.toLowerCase().includes('invalid') ||
+          errText.toLowerCase().includes('not found')
+        ) {
+          console.warn('❌ Device token unrecognized by server. Wiping credentials.');
+          await storage.saveToken('');
+          await storage.saveRole(null);
+          Alert.alert('Session Expired', 'Please select your role again.');
+          navigation.replace('RoleSelection');
+        }
+      }
+    };
+
+    initAuthAndSocket();
+
+    return () => {
+      if (socketInstance) {
+        socketInstance.off('ackUpdated');
+      }
+    };
+  }, [navigation]);
 
   // Cooldown countdown interval
   useEffect(() => {

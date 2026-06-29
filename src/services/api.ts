@@ -90,3 +90,21 @@ export const snoozeReminder = async (duration: number): Promise<void> => {
     { headers: { 'Idempotency-Key': generateIdempotencyKey() } },
   );
 };
+
+export const syncDeviceState = async (): Promise<any> => {
+  // 1. Verify device token validity by calling /api/users/me
+  const meResponse = await apiClient.get('/api/users/me');
+  
+  // 2. Fetch and register fresh FCM Token
+  try {
+    const fcmToken = await messaging().getToken();
+    if (fcmToken) {
+      console.log('Syncing fresh FCM Token:', fcmToken);
+      await apiClient.post('/api/users/me/fcm-token', { fcmToken });
+    }
+  } catch (fcmErr) {
+    console.error('FCM Token sync error during startup:', fcmErr);
+  }
+  
+  return meResponse.data;
+};

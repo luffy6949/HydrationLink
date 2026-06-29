@@ -9,10 +9,10 @@ import {
 } from 'react-native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {RootStackParamList} from '../navigation/AppNavigator';
-import {acknowledgeReminder, snoozeReminder} from '../services/api';
+import {acknowledgeReminder, snoozeReminder, syncDeviceState} from '../services/api';
 import {storage} from '../utils/storage';
 import {COLORS, SPACING, TYPOGRAPHY} from '../utils/theme';
-import {getSocket} from '../services/socket';
+import {getSocket, connectSocket} from '../services/socket';
 import notifee, {AndroidImportance, AndroidVisibility} from '@notifee/react-native';
 import {NOTIFICATION_CHANNELS} from '../utils/constants';
 
@@ -31,49 +31,79 @@ const ReceiverDashboard: React.FC<Props> = ({navigation}) => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const socket = getSocket();
-    
-    if (socket) {
-      const handleIncoming = async (data: {senderName?: string; sentAt?: string}) => {
-        const sender = data.senderName || 'Luffy';
-        setCurrentReminder(`${sender} wants you to drink water right now!`);
+    let socketInstance: any = null;
+
+    const initAuthAndSocket = async () => {
+      try {
+        // 1. Force explicit API call to refresh FCM and check auth
+        await syncDeviceState();
         
-        try {
-          const channelId = await notifee.createChannel({
-            id: NOTIFICATION_CHANNELS.HYDRATION_REMINDERS,
-            name: 'Hydration Reminders',
-            importance: AndroidImportance.HIGH,
-            sound: 'default',
-            vibration: true,
-            vibrationPattern: [0, 500, 200, 500, 200, 500],
-            visibility: AndroidVisibility.PUBLIC,
-          });
-          
-          await notifee.displayNotification({
-            id: 'hydration-alert',
-            title: 'Hydration Alert! 💧',
-            body: `${sender} wants you to drink water right now!`,
-            android: {
-              channelId,
-              importance: AndroidImportance.HIGH,
-              sound: 'default',
-              vibrationPattern: [0, 500, 200, 500, 200, 500],
-              visibility: AndroidVisibility.PUBLIC,
-              pressAction: { id: 'default' },
-            },
-          });
-        } catch (err) {
-          console.error('Failed to display foreground socket notification in ReceiverDashboard:', err);
+        // 2. Establish/retrieve the socket connection
+        const socket = await connectSocket();
+        
+        if (socket) {
+          socketInstance = socket;
+          const handleIncoming = async (data: {senderName?: string; sentAt?: string}) => {
+            const sender = data.senderName || 'Luffy';
+            setCurrentReminder(`${sender} wants you to drink water right now!`);
+            
+            try {
+              const channelId = await notifee.createChannel({
+                id: NOTIFICATION_CHANNELS.HYDRATION_REMINDERS,
+                name: 'Hydration Reminders',
+                importance: AndroidImportance.HIGH,
+                sound: 'default',
+                vibration: true,
+                vibrationPattern: [0, 500, 200, 500, 200, 500],
+                visibility: AndroidVisibility.PUBLIC,
+              });
+              
+              await notifee.displayNotification({
+                id: 'hydration-alert',
+                title: 'Hydration Alert! 💧',
+                body: `${sender} wants you to drink water right now!`,
+                android: {
+                  channelId,
+                  importance: AndroidImportance.HIGH,
+                  sound: 'default',
+                  vibrationPattern: [0, 500, 200, 500, 200, 500],
+                  visibility: AndroidVisibility.PUBLIC,
+                  pressAction: { id: 'default' },
+                },
+              });
+            } catch (err) {
+              console.error('Failed to display foreground socket notification in ReceiverDashboard:', err);
+            }
+          };
+
+          socket.on('newAlert', handleIncoming);
         }
-      };
+      } catch (error: any) {
+        console.error('Auth verification failed on ReceiverDashboard mount:', error);
+        const errText = error.response?.data?.error || error.response?.data?.message || '';
+        if (
+          error.response?.status === 401 ||
+          error.response?.status === 404 ||
+          errText.toLowerCase().includes('invalid') ||
+          errText.toLowerCase().includes('not found')
+        ) {
+          console.warn('❌ Device token unrecognized by server. Wiping credentials.');
+          await storage.saveToken('');
+          await storage.saveRole(null);
+          Alert.alert('Session Expired', 'Please select your role again.');
+          navigation.replace('RoleSelection');
+        }
+      }
+    };
 
-      socket.on('newAlert', handleIncoming);
+    initAuthAndSocket();
 
-      return () => {
-        socket.off('newAlert', handleIncoming);
-      };
-    }
-  }, []);
+    return () => {
+      if (socketInstance) {
+        socketInstance.off('newAlert');
+      }
+    };
+  }, [navigation]);
 
   const handleDrankIt = async () => {
     setLoading(true);

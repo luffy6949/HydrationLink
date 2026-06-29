@@ -5,9 +5,13 @@ const TOKEN_KEY = 'HYDRATION_TOKEN';
 const DEVICE_TOKEN_KEY = 'HYDRATION_DEVICE_TOKEN';
 
 export const storage = {
-  saveRole: async (role: 'sender' | 'receiver') => {
+  saveRole: async (role: 'sender' | 'receiver' | null) => {
     try {
-      await AsyncStorage.setItem(ROLE_KEY, role);
+      if (role === null) {
+        await AsyncStorage.removeItem(ROLE_KEY);
+      } else {
+        await AsyncStorage.setItem(ROLE_KEY, role);
+      }
     } catch (e) {
       console.error('Failed to save role', e);
     }
