@@ -105,6 +105,20 @@ android {
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
         }
     }
+    packagingOptions {
+        // Debug symbols ko release build se strictly exclude karo
+        doNotStrip "*/arm64-v8a/*.so"
+        exclude "**/libjscexecutor.so"
+    }
+    
+    // Agar buildType block hai toh check karo:
+    buildTypes {
+        release {
+            // Isse build size chhota hoga aur memory bohot kam lagegi
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
+        }
+    }
 }
 // Forcefully override react-native-screens dual compilation target bug
 project.ext.react = [

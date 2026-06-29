@@ -6,6 +6,7 @@ import notifee, {AndroidImportance, AndroidVisibility} from '@notifee/react-nati
 import AppNavigator from './src/navigation/AppNavigator';
 import {COLORS} from './src/utils/theme';
 import {NOTIFICATION_CHANNELS} from './src/utils/constants';
+import {getSocket} from './src/services/socket';
 
 function App(): React.JSX.Element {
   useEffect(() => {
@@ -42,12 +43,21 @@ function App(): React.JSX.Element {
                 return;
               }
 
-              // 🚀 FIX: Data packet se dynamic sender name nikalo
+              // DEDUP: If socket is connected, the socket.ts listener already
+              // displayed this notification via Notifee. Skip FCM display to
+              // prevent double-buzzing the user.
+              const socket = getSocket();
+              if (socket?.connected) {
+                console.log('Socket is connected — skipping FCM foreground display (socket.ts handles it).');
+                return;
+              }
+
+              // Socket is disconnected but FCM still reached foreground — display it
               const senderName = remoteMessage.data?.senderName || 'Someone';
 
               await notifee.displayNotification({
                 title: 'Hydration Alert! 💧',
-                body: `${senderName} wants you to drink water right now!`, // Foreground dynamic text
+                body: `${senderName} wants you to drink water right now!`,
                 android: {
                   channelId,
                   importance: AndroidImportance.HIGH,
