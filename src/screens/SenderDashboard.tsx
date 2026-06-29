@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useCallback} from 'react';
+import React, {useState, useEffect, useCallback, useRef} from 'react';
 import {
   View,
   Text,
@@ -28,6 +28,12 @@ const SenderDashboard: React.FC<Props> = ({navigation}) => {
   const [lastAcknowledged, setLastAcknowledged] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  // Cooldown timer state
+  const [cooldownEnd, setCooldownEnd] = useState<number | null>(null);
+  const [remainingMs, setRemainingMs] = useState(0);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Existing socket listener — UNTOUCHED
   useEffect(() => {
     const socket = getSocket();
     
@@ -46,11 +52,64 @@ const SenderDashboard: React.FC<Props> = ({navigation}) => {
     }
   }, []);
 
+  // Cooldown countdown interval
+  useEffect(() => {
+    if (cooldownEnd === null) {
+      setRemainingMs(0);
+      return;
+    }
+
+    const tick = () => {
+      const diff = cooldownEnd - Date.now();
+      if (diff <= 0) {
+        setRemainingMs(0);
+        setCooldownEnd(null);
+        if (timerRef.current) {
+          clearInterval(timerRef.current);
+          timerRef.current = null;
+        }
+      } else {
+        setRemainingMs(diff);
+      }
+    };
+
+    tick(); // Immediate first tick
+    timerRef.current = setInterval(tick, 1000);
+
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    };
+  }, [cooldownEnd]);
+
+  const isCooldownActive = remainingMs > 0;
+
+  const formatCooldown = (ms: number): string => {
+    const totalSeconds = Math.ceil(ms / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  };
+
   const handleSendReminder = async () => {
     setLoading(true);
     try {
-      await sendReminder();
-      Alert.alert('Success', 'Reminder sent!');
+      const result = await sendReminder();
+
+      if (result.widgetState === 'THROTTLED' && result.retryAt) {
+        const retryTime = new Date(result.retryAt).getTime();
+        setCooldownEnd(retryTime);
+        Alert.alert('Cooldown Active', 'Please wait before sending another reminder.');
+      } else if (result.widgetState === 'SENT') {
+        Alert.alert('Success', 'Reminder sent!');
+        // Start cooldown based on retryAt from the SENT response
+        if (result.retryAt) {
+          const retryTime = new Date(result.retryAt).getTime();
+          setCooldownEnd(retryTime);
+        }
+      }
     } catch (error: any) {
       Alert.alert(
         'Error',
@@ -88,11 +147,18 @@ const SenderDashboard: React.FC<Props> = ({navigation}) => {
       </View>
 
       <TouchableOpacity
-        style={styles.reminderButton}
+        style={[
+          styles.reminderButton,
+          (loading || isCooldownActive) && styles.reminderButtonDisabled,
+        ]}
         onPress={handleSendReminder}
-        disabled={loading}>
+        disabled={loading || isCooldownActive}>
         <Text style={styles.reminderButtonText}>
-          {loading ? 'Sending...' : 'Send Reminder'}
+          {loading
+            ? 'Sending...'
+            : isCooldownActive
+            ? `Cooldown: ${formatCooldown(remainingMs)} Remaining`
+            : 'Send Reminder'}
         </Text>
       </TouchableOpacity>
 
@@ -162,6 +228,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
   },
+  reminderButtonDisabled: {
+    backgroundColor: COLORS.steel,
+    opacity: 0.6,
+    elevation: 0,
+    shadowOpacity: 0,
+  },
   reminderButtonText: {
     ...TYPOGRAPHY.button,
     fontSize: 24,
@@ -176,3 +248,4 @@ const styles = StyleSheet.create({
 });
 
 export default SenderDashboard;
+

@@ -64,9 +64,10 @@ export const claimRole = async (
 };
 
 // Sender taps the button to send a hydration reminder/alert
-export const sendReminder = async (): Promise<void> => {
+export const sendReminder = async (): Promise<{widgetState: string; retryAt?: string}> => {
   // Backend is app.use('/api/widget', widgetRoutes) + router.post('/tap')
-  await apiClient.post('/api/widget/tap');
+  const res = await apiClient.post('/api/widget/tap');
+  return res.data;
 };
 
 // Receiver responds (DRANK / SNOOZE) from the alert

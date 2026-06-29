@@ -1,6 +1,6 @@
 import { AppRegistry } from 'react-native';
 import messaging from '@react-native-firebase/messaging';
-import notifee, { AndroidImportance } from '@notifee/react-native';
+import notifee, { AndroidImportance, AndroidVisibility } from '@notifee/react-native';
 import App from './App';
 import { name as appName } from './app.json';
 import firebase from '@react-native-firebase/app';
@@ -26,6 +26,10 @@ messaging().setBackgroundMessageHandler(async remoteMessage => {
       id: 'hydration-reminders',
       name: 'Hydration Reminders',
       importance: AndroidImportance.HIGH,
+      sound: 'default',
+      vibration: true,
+      vibrationPattern: [0, 500, 200, 500, 200, 500],
+      visibility: AndroidVisibility.PUBLIC,
     });
 
   // Background me aane wale custom data payload ko handle karne ke liye check lagao
@@ -37,6 +41,9 @@ messaging().setBackgroundMessageHandler(async remoteMessage => {
       android: {
         channelId,
         importance: AndroidImportance.HIGH,
+        sound: 'default',
+        vibrationPattern: [0, 500, 200, 500, 200, 500],
+        visibility: AndroidVisibility.PUBLIC,
         pressAction: {
           id: 'default',
         },

@@ -1,5 +1,5 @@
 import {io, Socket} from 'socket.io-client';
-import notifee, {AndroidImportance} from '@notifee/react-native';
+import notifee, {AndroidImportance, AndroidVisibility} from '@notifee/react-native';
 import {storage} from '../utils/storage';
 import {NOTIFICATION_CHANNELS} from '../utils/constants';
 
@@ -42,6 +42,10 @@ export const connectSocket = async (): Promise<Socket | null> => {
           id: NOTIFICATION_CHANNELS.HYDRATION_REMINDERS,
           name: 'Hydration Reminders',
           importance: AndroidImportance.HIGH,
+          sound: 'default',
+          vibration: true,
+          vibrationPattern: [0, 500, 200, 500, 200, 500],
+          visibility: AndroidVisibility.PUBLIC,
         });
         
         await notifee.displayNotification({
@@ -50,6 +54,9 @@ export const connectSocket = async (): Promise<Socket | null> => {
           android: {
             channelId,
             importance: AndroidImportance.HIGH,
+            sound: 'default',
+            vibrationPattern: [0, 500, 200, 500, 200, 500],
+            visibility: AndroidVisibility.PUBLIC,
             pressAction: { id: 'default' },
           },
         });

@@ -2,7 +2,7 @@ import React, {useEffect} from 'react';
 import {StatusBar} from 'react-native';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import messaging from '@react-native-firebase/messaging';
-import notifee, {AndroidImportance} from '@notifee/react-native';
+import notifee, {AndroidImportance, AndroidVisibility} from '@notifee/react-native';
 import AppNavigator from './src/navigation/AppNavigator';
 import {COLORS} from './src/utils/theme';
 import {NOTIFICATION_CHANNELS} from './src/utils/constants';
@@ -26,6 +26,10 @@ function App(): React.JSX.Element {
                       id: NOTIFICATION_CHANNELS.HYDRATION_REMINDERS,
                       name: 'Hydration Reminders',
                       importance: AndroidImportance.HIGH,
+                      sound: 'default',
+                      vibration: true,
+                      vibrationPattern: [0, 500, 200, 500, 200, 500],
+                      visibility: AndroidVisibility.PUBLIC,
                     });
 
           const unsubscribe = messaging().onMessage(async remoteMessage => {
@@ -47,6 +51,9 @@ function App(): React.JSX.Element {
                 android: {
                   channelId,
                   importance: AndroidImportance.HIGH,
+                  sound: 'default',
+                  vibrationPattern: [0, 500, 200, 500, 200, 500],
+                  visibility: AndroidVisibility.PUBLIC,
                   pressAction: { id: 'default' },
                 },
               });
