@@ -1,4 +1,4 @@
-﻿import React, {useState, useEffect, useCallback} from 'react';
+import React, {useState, useEffect, useCallback} from 'react';
 import {
   View,
   Text,
@@ -32,15 +32,16 @@ const SenderDashboard: React.FC<Props> = ({navigation}) => {
     const socket = getSocket();
     
     if (socket) {
-      const handleAcknowledged = (data: {timestamp: string}) => {
-        setLastAcknowledged(data.timestamp);
+      const handleAcknowledged = (data: {at?: string, timestamp?: string}) => {
+        setLastAcknowledged(data.at || data.timestamp || new Date().toISOString());
         setRemindersSent(prev => prev + 1);
+        Alert.alert('Hydration Success!', 'Receiver has drank water!');
       };
 
-      socket.on('reminder:acknowledged', handleAcknowledged);
+      socket.on('ackUpdated', handleAcknowledged);
 
       return () => {
-        socket.off('reminder:acknowledged', handleAcknowledged);
+        socket.off('ackUpdated', handleAcknowledged);
       };
     }
   }, []);
@@ -71,7 +72,7 @@ const SenderDashboard: React.FC<Props> = ({navigation}) => {
       style={styles.container}
       contentContainerStyle={styles.contentContainer}>
       <View style={styles.header}>
-        <Text style={styles.title}>Prince Dashboard</Text>
+        <Text style={styles.title}>Luffy Dashboard</Text>
         <Text style={styles.subtitle}>Stay hydrated, keep your court on track.</Text>
       </View>
 

@@ -86,7 +86,7 @@ const ReceiverDashboard: React.FC<Props> = ({navigation}) => {
       contentContainerStyle={styles.contentContainer}>
       <View style={styles.header}>
         <Text style={styles.title}>Receiver Dashboard</Text>
-        <Text style={styles.subtitle}>Stay hydrated, my Prince commands it.</Text>
+        <Text style={styles.subtitle}>Stay hydrated, my Bossie commands it.</Text>
       </View>
 
       <View style={styles.statsContainer}>

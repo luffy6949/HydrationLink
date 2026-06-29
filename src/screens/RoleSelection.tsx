@@ -64,7 +64,7 @@ const RoleSelection: React.FC<Props> = ({navigation}) => {
         {loading === 'sender' ? (
           <ActivityIndicator color={COLORS.text} />
         ) : (
-          <Text style={styles.buttonText}>I am Prince (Sender)</Text>
+          <Text style={styles.buttonText}>I am Luffy (Sender)</Text>
         )}
       </TouchableOpacity>
 

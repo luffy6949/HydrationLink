@@ -15,23 +15,36 @@ if (!firebase.apps.length) {
 messaging().setBackgroundMessageHandler(async remoteMessage => {
   console.log('Background Message:', remoteMessage);
 
-  const channelId = await notifee.createChannel({
-    id: 'hydration-reminders',
-    name: 'Hydration Reminders',
-    importance: AndroidImportance.HIGH,
-  });
+  try {
+    // Only show system notification if it's an actual hydration alert
+    if (remoteMessage.data?.type !== 'HYDRATION_ALERT') {
+      console.log('Ignoring non-alert FCM background message:', remoteMessage.data?.type);
+      return;
+    }
 
-  await notifee.displayNotification({
-    title: remoteMessage.notification?.title || 'Hydration Reminder',
-    body: remoteMessage.notification?.body || 'Time to drink water!',
-    android: {
-      channelId,
+    const channelId = await notifee.createChannel({
+      id: 'hydration-reminders',
+      name: 'Hydration Reminders',
       importance: AndroidImportance.HIGH,
-      pressAction: {
-        id: 'default',
+    });
+
+  // Background me aane wale custom data payload ko handle karne ke liye check lagao
+    const senderName = remoteMessage.data?.senderName || 'Someone';
+    
+    await notifee.displayNotification({
+      title: 'Hydration Alert! 💧',
+      body: `${senderName} wants you to drink water right now!`, // Sahi dynamic value map kari
+      android: {
+        channelId,
+        importance: AndroidImportance.HIGH,
+        pressAction: {
+          id: 'default',
+        },
       },
-    },
-  });
+    });
+  } catch (error) {
+    console.error('Background message handler failed:', error);
+  }
 });
 
 // Register background event handler for Notifee

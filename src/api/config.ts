@@ -1,8 +1,7 @@
 import axios from 'axios';
 import {storage} from '../utils/storage';
 
-const API_BASE_URL = 'https://hydrationlink.onrender.com'; 
-
+export const API_BASE_URL = 'https://hydrationlink.onrender.com'; 
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -12,9 +11,15 @@ const apiClient = axios.create({
   },
 });
 
-// Request interceptor to attach token
+// Request interceptor to attach token from storage.
+// If the caller already set an explicit Authorization header (e.g. during
+// claimRole before the token is persisted), the interceptor leaves it alone.
 apiClient.interceptors.request.use(
   async (config) => {
+    if (config.headers?.Authorization) {
+      return config;
+    }
+
     const token = await storage.getToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;

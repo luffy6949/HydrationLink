@@ -1,4 +1,5 @@
 import apiClient from '../api/config';
+import messaging from '@react-native-firebase/messaging';
 
 // Generate a unique key per request so the backend idempotency middleware
 // can safely replay or deduplicate retried responses.
@@ -19,12 +20,47 @@ export const claimRole = async (
   role: 'SENDER' | 'RECEIVER',
   deviceToken: string
 ): Promise<ClaimResponse> => {
-  // Backend is app.use('/api/users', userRoutes) + router.post('/claim')
-  // Body expects { role }, deviceToken is automatically handled later or via schema
+  
+  // 1. Pehle server par user ka role claim/login hit karo
   const response = await apiClient.post('/api/users/claim', {
-    role: role.toUpperCase(), // Backend checks strictly for 'SENDER' or 'RECEIVER'
+    role: role.toUpperCase(),
   });
-  return response.data;
+  
+  // Response ka data save karke rakho jo aakhiri me return karna hai
+  const data = response.data;
+
+  // 2. Ab login hone ke baad token fetch karke sahi authed route par post karo
+  try {
+    const fcmToken = await messaging().getToken();
+    if (fcmToken) {
+      console.log('Generated FCM Token:', fcmToken);
+      
+      // Sahi route jo userRoutes.ts me '/me/fcm-token' hai with '/api/users' base
+      await apiClient.post(
+      '/api/users/me/fcm-token', 
+      { fcmToken },
+      { 
+        headers: { 
+          Authorization: `Bearer ${data.deviceToken}`,
+        } 
+      }
+    );
+      console.log('FCM Token successfully synced to Atlas!');
+    }
+  } catch (fcmErr: any) {
+    console.error('❌ Firebase token sync failed during login step:');
+    if (fcmErr.response) {
+      console.error(`Status: ${fcmErr.response.status}`);
+      console.error(`Data:`, fcmErr.response.data);
+    } else if (fcmErr.request) {
+      console.error('Network Error / Timeout. No response received.');
+    } else {
+      console.error(`Error Message: ${fcmErr.message}`);
+    }
+  }
+
+  // Aakhiri me login data controller ko return kar do
+  return data;
 };
 
 // Sender taps the button to send a hydration reminder/alert
