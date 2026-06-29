@@ -56,6 +56,7 @@ function App(): React.JSX.Element {
               const senderName = remoteMessage.data?.senderName || 'Someone';
 
               await notifee.displayNotification({
+                id: 'hydration-alert',
                 title: 'Hydration Alert! 💧',
                 body: `${senderName} wants you to drink water right now!`,
                 android: {

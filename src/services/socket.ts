@@ -49,6 +49,7 @@ export const connectSocket = async (): Promise<Socket | null> => {
         });
         
         await notifee.displayNotification({
+          id: 'hydration-alert',
           title: 'Hydration Alert! 💧',
           body: `${payload.senderName || 'Someone'} wants you to drink water right now!`,
           android: {

@@ -1,4 +1,4 @@
-﻿import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   View,
   Text,
@@ -13,6 +13,8 @@ import {acknowledgeReminder, snoozeReminder} from '../services/api';
 import {storage} from '../utils/storage';
 import {COLORS, SPACING, TYPOGRAPHY} from '../utils/theme';
 import {getSocket} from '../services/socket';
+import notifee, {AndroidImportance, AndroidVisibility} from '@notifee/react-native';
+import {NOTIFICATION_CHANNELS} from '../utils/constants';
 
 type ReceiverDashboardNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -32,14 +34,43 @@ const ReceiverDashboard: React.FC<Props> = ({navigation}) => {
     const socket = getSocket();
     
     if (socket) {
-      const handleIncoming = (data: {message: string; timestamp: string}) => {
-        setCurrentReminder(data.message);
+      const handleIncoming = async (data: {senderName?: string; sentAt?: string}) => {
+        const sender = data.senderName || 'Luffy';
+        setCurrentReminder(`${sender} wants you to drink water right now!`);
+        
+        try {
+          const channelId = await notifee.createChannel({
+            id: NOTIFICATION_CHANNELS.HYDRATION_REMINDERS,
+            name: 'Hydration Reminders',
+            importance: AndroidImportance.HIGH,
+            sound: 'default',
+            vibration: true,
+            vibrationPattern: [0, 500, 200, 500, 200, 500],
+            visibility: AndroidVisibility.PUBLIC,
+          });
+          
+          await notifee.displayNotification({
+            id: 'hydration-alert',
+            title: 'Hydration Alert! 💧',
+            body: `${sender} wants you to drink water right now!`,
+            android: {
+              channelId,
+              importance: AndroidImportance.HIGH,
+              sound: 'default',
+              vibrationPattern: [0, 500, 200, 500, 200, 500],
+              visibility: AndroidVisibility.PUBLIC,
+              pressAction: { id: 'default' },
+            },
+          });
+        } catch (err) {
+          console.error('Failed to display foreground socket notification in ReceiverDashboard:', err);
+        }
       };
 
-      socket.on('reminder:incoming', handleIncoming);
+      socket.on('newAlert', handleIncoming);
 
       return () => {
-        socket.off('reminder:incoming', handleIncoming);
+        socket.off('newAlert', handleIncoming);
       };
     }
   }, []);

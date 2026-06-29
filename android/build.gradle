@@ -19,4 +19,23 @@ buildscript {
     }
 }
 
+// ✅ FIXED: Moved subprojects OUTSIDE buildscript block to root level
+subprojects {
+    afterEvaluate { project ->
+        // Kuch libraries 'android' keyword use karti hain, par plugin missing hota hai, usse crash rokne ke liye:
+        if (project.extensions.findByName("android") != null) {
+            project.android {
+                // ✅ FIXED: Modern Gradle compilation enforcement syntax
+                compileSdk = rootProject.ext.compileSdkVersion
+                buildToolsVersion = rootProject.ext.buildToolsVersion
+                
+                defaultConfig {
+                    minSdk = rootProject.ext.minSdkVersion
+                    targetSdk = rootProject.ext.targetSdkVersion
+                }
+            }
+        }
+    }
+}
+
 apply plugin: "com.facebook.react.rootproject"
