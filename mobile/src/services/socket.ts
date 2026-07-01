@@ -52,6 +52,7 @@ export const connectSocket = async (): Promise<Socket | null> => {
           android: {
             channelId,
             importance: AndroidImportance.HIGH,
+            color: '#FF8C00',
             pressAction: { id: 'default' },
             actions: [
               {

@@ -59,6 +59,7 @@ function App(): React.JSX.Element {
                   android: {
                     channelId,
                     importance: AndroidImportance.HIGH,
+                    color: '#FF8C00',
                     pressAction: { id: 'default' },
                     actions: [
                       {
@@ -75,6 +76,7 @@ function App(): React.JSX.Element {
                   android: {
                     channelId,
                     importance: AndroidImportance.HIGH,
+                    color: '#006686',
                     pressAction: { id: 'default' },
                   },
                 });
@@ -85,6 +87,7 @@ function App(): React.JSX.Element {
                   android: {
                     channelId,
                     importance: AndroidImportance.HIGH,
+                    color: '#006686',
                     pressAction: { id: 'default' },
                   },
                 });

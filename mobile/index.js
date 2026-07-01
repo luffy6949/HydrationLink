@@ -34,6 +34,7 @@ messaging().setBackgroundMessageHandler(async remoteMessage => {
         android: {
           channelId,
           importance: AndroidImportance.HIGH,
+          color: '#FF8C00',
           pressAction: {
             id: 'default',
           },
@@ -52,6 +53,7 @@ messaging().setBackgroundMessageHandler(async remoteMessage => {
         android: {
           channelId,
           importance: AndroidImportance.HIGH,
+          color: '#006686',
           pressAction: {
             id: 'default',
           },
@@ -64,6 +66,7 @@ messaging().setBackgroundMessageHandler(async remoteMessage => {
         android: {
           channelId,
           importance: AndroidImportance.HIGH,
+          color: '#006686',
           pressAction: {
             id: 'default',
           },
