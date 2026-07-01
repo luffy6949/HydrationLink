@@ -21,6 +21,11 @@ buildscript {
 
 // ✅ FIXED: Moved subprojects OUTSIDE buildscript block to root level
 subprojects {
+    // Gradle 9+ compatibility patch: Apply com.android.library before evaluating notifee
+    if (name.contains('notifee')) {
+        apply plugin: 'com.android.library'
+    }
+
     afterEvaluate { project ->
         // Kuch libraries 'android' keyword use karti hain, par plugin missing hota hai, usse crash rokne ke liye:
         if (project.extensions.findByName("android") != null) {
