@@ -49,30 +49,48 @@ function App(): React.JSX.Element {
             console.log('Foreground Message:', remoteMessage);
             
             try {
-              // Only show system notification if it's an actual hydration alert
-              if (remoteMessage.data?.type !== 'HYDRATION_ALERT') {
-                console.log('Ignoring non-alert FCM foreground message:', remoteMessage.data?.type);
-                return;
+              const messageType = remoteMessage.data?.type;
+
+              if (messageType === 'HYDRATION_ALERT') {
+                const senderName = remoteMessage.data?.senderName || 'Someone';
+                await notifee.displayNotification({
+                  title: 'Hydration Alert! 💧',
+                  body: `${senderName} wants you to drink water right now!`,
+                  android: {
+                    channelId,
+                    importance: AndroidImportance.HIGH,
+                    pressAction: { id: 'default' },
+                    actions: [
+                      {
+                        title: 'I Drank It! 💧',
+                        pressAction: { id: 'log-hydration' },
+                      },
+                    ],
+                  },
+                });
+              } else if (messageType === 'ackUpdated') {
+                await notifee.displayNotification({
+                  title: 'Hydration Success! 💧',
+                  body: 'Your partner has successfully logged a drink!',
+                  android: {
+                    channelId,
+                    importance: AndroidImportance.HIGH,
+                    pressAction: { id: 'default' },
+                  },
+                });
+              } else if (messageType === 'snoozed') {
+                await notifee.displayNotification({
+                  title: 'Reminder Snoozed ⏳',
+                  body: 'Your partner has snoozed the reminder.',
+                  android: {
+                    channelId,
+                    importance: AndroidImportance.HIGH,
+                    pressAction: { id: 'default' },
+                  },
+                });
+              } else {
+                console.log('Ignoring non-actionable FCM foreground message type:', messageType);
               }
-
-              // 🚀 FIX: Data packet se dynamic sender name nikalo
-              const senderName = remoteMessage.data?.senderName || 'Someone';
-
-              await notifee.displayNotification({
-                title: 'Hydration Alert! 💧',
-                body: `${senderName} wants you to drink water right now!`, // Foreground dynamic text
-                android: {
-                  channelId,
-                  importance: AndroidImportance.HIGH,
-                  pressAction: { id: 'default' },
-                  actions: [
-                    {
-                      title: 'I Drank It! 💧',
-                      pressAction: { id: 'log-hydration' },
-                    },
-                  ],
-                },
-              });
             } catch (err) {
               console.error('Failed to display foreground FCM notification:', err);
             }
