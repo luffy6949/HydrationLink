@@ -1,0 +1,31 @@
+{
+  "name": "hydrationlink-backend",
+  "version": "1.0.0",
+  "description": "HydrationLink backend - Express + Socket.io + MongoDB + FCM",
+  "main": "dist/server.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "dev": "ts-node src/server.ts",
+    "seed": "ts-node src/seed/seedUsers.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "firebase-admin": "^12.3.0",
+    "mongoose": "^8.5.1",
+    "node-cron": "^4.5.0",
+    "socket.io": "^4.7.5"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.14.10",
+    "@types/node-cron": "^3.0.11",
+    "ts-node": "^10.9.2",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.5.3"
+  }
+}

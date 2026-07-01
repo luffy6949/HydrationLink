@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "952548963638",
+    "project_id": "hydration-f2f29",
+    "storage_bucket": "hydration-f2f29.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:952548963638:android:71c5a6ba3011b09a81af97",
+        "android_client_info": {
+          "package_name": "com.mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB6WFq_apJWNL8fXs8M9lYTGPM2OFKqubU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:952548963638:android:9ac5399f7072d01681af97",
+        "android_client_info": {
+          "package_name": "hydration.remind.luffy"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB6WFq_apJWNL8fXs8M9lYTGPM2OFKqubU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
