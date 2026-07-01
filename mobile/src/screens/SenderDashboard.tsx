@@ -63,7 +63,7 @@ const SenderDashboard: React.FC<Props> = ({navigation}) => {
 
   const handleLogout = async () => {
     await storage.saveToken('');
-    await storage.saveRole('sender');
+    await storage.saveRole(null);
     navigation.replace('RoleSelection');
   };
 

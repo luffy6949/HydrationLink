@@ -76,7 +76,7 @@ const ReceiverDashboard: React.FC<Props> = ({navigation}) => {
 
   const handleLogout = async () => {
     await storage.saveToken('');
-    await storage.saveRole('receiver');
+    await storage.saveRole(null);
     navigation.replace('RoleSelection');
   };
 
@@ -86,7 +86,7 @@ const ReceiverDashboard: React.FC<Props> = ({navigation}) => {
       contentContainerStyle={styles.contentContainer}>
       <View style={styles.header}>
         <Text style={styles.title}>Receiver Dashboard</Text>
-        <Text style={styles.subtitle}>Stay hydrated, my Bossie commands it.</Text>
+        <Text style={styles.subtitle}>Stay hydrated, your partner is watching! 💧</Text>
       </View>
 
       <View style={styles.statsContainer}>

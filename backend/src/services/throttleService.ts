@@ -9,8 +9,8 @@ export interface ThrottleResult {
 
 /**
  * Atomically checks the Sender's throttle window and, if clear, sets a new
- * throttleUntil 20 minutes in the future -- all inside a MongoDB transaction
- * so a flood of rapid widget taps can never both pass the check.
+ * throttleUntil N seconds in the future (default 30s) -- all inside a MongoDB
+ * transaction so a flood of rapid widget taps can never both pass the check.
  *
  * NOTE: session.withTransaction() requires Mongo to be running as a replica
  * set (a single-node rs works fine for local dev). See README.md.
@@ -32,7 +32,7 @@ export async function checkAndSetThrottle(senderId: string): Promise<ThrottleRes
         return;
       }
 
-      const retryAt = new Date(now.getTime() + env.throttleMinutes * 60_000);
+      const retryAt = new Date(now.getTime() + env.throttleSeconds * 1_000);
       sender.throttleUntil = retryAt;
       await sender.save({ session });
       result = { throttled: false, retryAt };

@@ -1,13 +1,20 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {NativeModules, Platform} from 'react-native';
+
+const {SharedPreferencesModule} = NativeModules;
 
 const ROLE_KEY = 'HYDRATION_ROLE';
 const TOKEN_KEY = 'HYDRATION_TOKEN';
 const DEVICE_TOKEN_KEY = 'HYDRATION_DEVICE_TOKEN';
 
 export const storage = {
-  saveRole: async (role: 'sender' | 'receiver') => {
+  saveRole: async (role: 'sender' | 'receiver' | null) => {
     try {
-      await AsyncStorage.setItem(ROLE_KEY, role);
+      if (role === null) {
+        await AsyncStorage.removeItem(ROLE_KEY);
+      } else {
+        await AsyncStorage.setItem(ROLE_KEY, role);
+      }
     } catch (e) {
       console.error('Failed to save role', e);
     }
@@ -24,6 +31,10 @@ export const storage = {
   saveToken: async (token: string) => {
     try {
       await AsyncStorage.setItem(TOKEN_KEY, token);
+      // Bridge to native Android SharedPreferences for the home-screen widget
+      if (Platform.OS === 'android' && SharedPreferencesModule) {
+        await SharedPreferencesModule.setItem(TOKEN_KEY, token);
+      }
     } catch (e) {
       console.error('Failed to save token', e);
     }

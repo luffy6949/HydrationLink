@@ -42,6 +42,8 @@ export const connectSocket = async (): Promise<Socket | null> => {
           id: NOTIFICATION_CHANNELS.HYDRATION_REMINDERS,
           name: 'Hydration Reminders',
           importance: AndroidImportance.HIGH,
+          vibration: true,
+          sound: 'default',
         });
         
         await notifee.displayNotification({
@@ -51,6 +53,12 @@ export const connectSocket = async (): Promise<Socket | null> => {
             channelId,
             importance: AndroidImportance.HIGH,
             pressAction: { id: 'default' },
+            actions: [
+              {
+                title: 'I Drank It! 💧',
+                pressAction: { id: 'log-hydration' },
+              },
+            ],
           },
         });
       } catch (err) {

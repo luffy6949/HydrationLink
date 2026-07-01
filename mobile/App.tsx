@@ -2,13 +2,28 @@ import React, {useEffect} from 'react';
 import {StatusBar} from 'react-native';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import messaging from '@react-native-firebase/messaging';
-import notifee, {AndroidImportance} from '@notifee/react-native';
+import notifee, {AndroidImportance, EventType} from '@notifee/react-native';
 import AppNavigator from './src/navigation/AppNavigator';
 import {COLORS} from './src/utils/theme';
 import {NOTIFICATION_CHANNELS} from './src/utils/constants';
+import {acknowledgeReminder} from './src/services/api';
 
 function App(): React.JSX.Element {
   useEffect(() => {
+    const unsubscribeForeground = notifee.onForegroundEvent(async ({ type, detail }) => {
+      if (type === EventType.ACTION_PRESS && detail.pressAction?.id === 'log-hydration') {
+        try {
+          await acknowledgeReminder();
+          console.log('✅ Foreground notification quick action acknowledged.');
+        } catch (err) {
+          console.error('❌ Foreground quick action error:', err);
+        }
+        if (detail.notification?.id) {
+          await notifee.cancelNotification(detail.notification.id);
+        }
+      }
+    });
+
     const setupNotifications = async () => {
       try {
         const authStatus = await messaging().requestPermission();
@@ -26,6 +41,8 @@ function App(): React.JSX.Element {
                       id: NOTIFICATION_CHANNELS.HYDRATION_REMINDERS,
                       name: 'Hydration Reminders',
                       importance: AndroidImportance.HIGH,
+                      vibration: true,
+                      sound: 'default',
                     });
 
           const unsubscribe = messaging().onMessage(async remoteMessage => {
@@ -48,6 +65,12 @@ function App(): React.JSX.Element {
                   channelId,
                   importance: AndroidImportance.HIGH,
                   pressAction: { id: 'default' },
+                  actions: [
+                    {
+                      title: 'I Drank It! 💧',
+                      pressAction: { id: 'log-hydration' },
+                    },
+                  ],
                 },
               });
             } catch (err) {
@@ -64,6 +87,7 @@ function App(): React.JSX.Element {
     const unsubscribePromise = setupNotifications();
 
     return () => {
+      unsubscribeForeground();
       unsubscribePromise.then(unsubscribe => {
         if (unsubscribe) unsubscribe();
       });
